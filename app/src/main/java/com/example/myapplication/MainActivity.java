@@ -29,11 +29,17 @@ public class MainActivity extends AppCompatActivity {
     Switch tb3;
     Switch tb4;
     TextView setText;
+    TextView temp;
+    TextView hum;
+    TextView noti;
     String MES = "messenge";
     String TB1 = "TB1";
     String TB2 = "TB2";
     String TB3 = "TB3";
     String TB4 = "TB4";
+
+    String HUM = "Humidity";
+    String TEMP = "Temperature";
     ImageView img;
 
     @Override
@@ -46,12 +52,17 @@ public class MainActivity extends AppCompatActivity {
         tb4 = findViewById(R.id.tb4);
         img = findViewById(R.id.imageView);
         setText = findViewById(R.id.textView);
+        temp = findViewById(R.id.text_temp);
+        hum = findViewById(R.id.text_hum);
+        noti = findViewById(R.id.noti);
 
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         deviceControl(database, TB1, tb1);
         deviceControl(database, TB2, tb2);
         deviceControl(database, TB3, tb3);
         deviceControl(database, TB4, tb4);
+        deviceControl(database, TEMP, tb4);
+        deviceControl(database, HUM, null);
 
         getControl(database, TB1, tb1);
         getControl(database, TB2, tb2);
@@ -67,16 +78,41 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void deviceControl(FirebaseDatabase database, String TB, final Switch tb) {
+    public void deviceControl(FirebaseDatabase database, final String TB, final Switch tb) {
         DatabaseReference databaseReference = database.getReference(TB);
         databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String value = dataSnapshot.getValue(String.class);
-                if (value.equals("1")) {
-                    tb.setChecked(true);
-                } else if (value.equals("0")) {
-                    tb.setChecked(false);
+                if (TB.equals("Humidity")) {
+                    hum.setText(value+"%");
+                } else if (TB.equals("Temperature")) {
+                    temp.setText(value+"'C");
+                    float tempratuer = Float.parseFloat(value);
+                    if (tempratuer >= 35) {
+                        if (!tb.isChecked()){
+                            noti.setText("Thời tiết nóng, bạn nên bật quạt cho mát");
+                        }else{
+                            noti.setText("");
+                        }
+                    }
+                    if (20 <=tempratuer && tempratuer <= 35) {
+                        if (tb.isChecked()){
+                            noti.setText("Thời tiết mát, bạn nên tắt quạt để tiết kiệm điện");
+                        }else{
+                            noti.setText("");
+                        }
+
+                    }
+                    if (tempratuer <=10){
+                        noti.setText("Thời tiết lạnh, bạn nên mặc áo ấm");
+                    }
+                } else {
+                    if (value.equals("1")) {
+                        tb.setChecked(true);
+                    } else if (value.equals("0")) {
+                        tb.setChecked(false);
+                    }
                 }
             }
 
@@ -135,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    protected void AIcontrol(String val){
+    protected void AIcontrol(String val) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference databaseMes = database.getReference(MES);
         DatabaseReference databaseTb1 = database.getReference(TB1);
@@ -144,40 +180,40 @@ public class MainActivity extends AppCompatActivity {
         DatabaseReference databaseTb4 = database.getReference(TB4);
         databaseMes.setValue(val);
 
-        if(val.contains("Bật tất cả")){
+        if (val.contains("Bật tất cả")) {
             databaseTb1.setValue("1");
             databaseTb2.setValue("1");
             databaseTb3.setValue("1");
             databaseTb4.setValue("1");
-        }else if(val.contains("ắt tất cả")){
+        } else if (val.contains("Tắt tất cả")) {
             databaseTb1.setValue("0");
             databaseTb2.setValue("0");
             databaseTb3.setValue("0");
             databaseTb4.setValue("0");
-        }else if (val.contains("bật") || val.contains("bậc")) {
+        } else if (val.contains("bật") || val.contains("bậc")) {
             if (val.contains("một") || val.contains("1")) {
                 databaseTb1.setValue("1");
             }
-            if (val.contains("hai") || val.contains("hay") || val.contains("hài") || val.contains("2")){
+            if (val.contains("hai") || val.contains("hay") || val.contains("hài") || val.contains("2")) {
                 databaseTb2.setValue("1");
             }
             if (val.contains("ba") || val.contains("3")) {
                 databaseTb3.setValue("1");
             }
-            if (val.contains("bốn") || val.contains("4")) {
+            if (val.contains("quạt") || val.contains("4")) {
                 databaseTb4.setValue("1");
             }
-        } else if(val.contains("tắt")) {
+        } else if (val.contains("tắt")) {
             if (val.contains("một") || val.contains("1")) {
                 databaseTb1.setValue("0");
             }
-            if (val.contains("hai") || val.contains("2")){
+            if (val.contains("hai") || val.contains("2")) {
                 databaseTb2.setValue("0");
             }
             if (val.contains("ba") || val.contains("3")) {
                 databaseTb3.setValue("0");
             }
-            if (val.contains("bốn") || val.contains("4")) {
+            if (val.contains("quạt") || val.contains("4")) {
                 databaseTb4.setValue("0");
             }
         }

@@ -3,7 +3,9 @@
     <string name="tb1">Đèn 1</string>
     <string name="tb2">Đèn 2</string>
     <string name="tb3">Đèn 3</string>
-    <string name="tb4">Đèn 4</string>
+    <string name="tb4">Quạt</string>
+    <string name="temp">Temperature: </string>
+    <string name="hum">Humidity: </string>
     <string name="speech_prompt">Say something…</string>
     <string name="speech_not_supported">Sorry! Your device doesn\'t support speech input</string>
     <string name="text_view_speak"></string>
