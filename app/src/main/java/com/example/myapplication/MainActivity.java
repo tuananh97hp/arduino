@@ -1,12 +1,22 @@
 package com.example.myapplication;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
 import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
@@ -23,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+    private NotificationCompat.Builder notiBuilder;
+
     private static final int REQ_CODE_SPEECH_INPUT = 100;
     Switch tb1;
     Switch tb2;
@@ -87,26 +99,8 @@ public class MainActivity extends AppCompatActivity {
                 if (TB.equals("Humidity")) {
                     hum.setText(value+"%");
                 } else if (TB.equals("Temperature")) {
-                    temp.setText(value+"'C");
-                    float tempratuer = Float.parseFloat(value);
-                    if (tempratuer >= 35) {
-                        if (!tb.isChecked()){
-                            noti.setText("Thời tiết nóng, bạn nên bật quạt cho mát");
-                        }else{
-                            noti.setText("");
-                        }
-                    }
-                    if (20 <=tempratuer && tempratuer <= 35) {
-                        if (tb.isChecked()){
-                            noti.setText("Thời tiết mát, bạn nên tắt quạt để tiết kiệm điện");
-                        }else{
-                            noti.setText("");
-                        }
-
-                    }
-                    if (tempratuer <=10){
-                        noti.setText("Thời tiết lạnh, bạn nên mặc áo ấm");
-                    }
+                    temp.setText(value+"°C");
+                    processTemperature(Float.parseFloat(value));
                 } else {
                     if (value.equals("1")) {
                         tb.setChecked(true);
@@ -216,6 +210,48 @@ public class MainActivity extends AppCompatActivity {
             if (val.contains("quạt") || val.contains("4")) {
                 databaseTb4.setValue("0");
             }
+        }
+    }
+
+    protected void notifyToControlDevice(String type, String title, String content, int icon) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        Intent intentConfirm = new Intent(this, NotificationActionReceiver.class);
+        intentConfirm.setAction("CONFIRM");
+        intentConfirm.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intentConfirm.putExtra("action_type", type);
+
+        Intent intentCancel = new Intent(this, NotificationActionReceiver.class);
+        intentCancel.setAction("CANCEL");
+        intentCancel.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntentConfirm = PendingIntent.getBroadcast(this, 0, intentConfirm, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pendingIntentCancel = PendingIntent.getBroadcast(this, 1, intentCancel, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(icon)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setAutoCancel(true)
+                .setSound(defaultSoundUri)
+                .setContentIntent(pendingIntent);
+
+        notificationBuilder.addAction(R.drawable.ic_check_black_24dp, "OK", pendingIntentConfirm);
+        notificationBuilder.addAction(R.drawable.ic_clear_black_24dp, "Không", pendingIntentCancel);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(11111, notificationBuilder.build());
+    }
+
+    protected void processTemperature(float temperature) {
+        if (temperature > 28 && !tb4.isChecked()) {
+            notifyToControlDevice("1", "Nhiệt độ cao hơn 28°C", "Bạn có muốn bật quạt không?", R.drawable.ic_whatshot_black_24dp);
+        }
+        if (temperature < 23 && tb4.isChecked()) {
+            notifyToControlDevice("0", "Nhiệt độ thấp hơn 23°C", "Bạn có muốn tắt quạt không?", R.drawable.ic_invert_colors_black_24dp);
         }
     }
 

@@ -16,6 +16,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name="NotificationActionReceiver">
+            <intent-filter>
+                <action android:name="CONFIRM" />
+                <action android:name="CANCEL" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
